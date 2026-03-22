@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Session } from './types'
 import { storage } from './storage'
 import { Stage1 } from './components/Stage1'
