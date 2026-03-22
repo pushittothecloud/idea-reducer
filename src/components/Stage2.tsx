@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Session, Idea } from '../types'
 
 interface Stage2Props {
@@ -8,39 +8,16 @@ interface Stage2Props {
   onBack: () => void
 }
 
-const promptTemplates = [
-  {
-    emoji: '🎯',
-    title: 'Help reduce frustration using automation?',
-    desc: 'Focus on removing manual effort or repetitive tasks',
-  },
-  {
-    emoji: '⚡',
-    title: 'How could we make this feel rewarding?',
-    desc: 'Focus on positive emotion or quick wins',
-  },
-  {
-    emoji: '👥',
-    title: 'Different user or audience to target?',
-    desc: 'Shift perspective to a different group',
-  },
-  {
-    emoji: '🔧',
-    title: 'Using a different tool or process?',
-    desc: 'Try a completely different approach',
-  },
-]
-
 export const Stage2: React.FC<Stage2Props> = ({ session, onUpdate, onNext, onBack }) => {
-  const [showManualInput, setShowManualInput] = useState(false)
-  const [manualIdea, setManualIdea] = useState({ name: '', oneLiner: '' })
+  const [ideaName, setIdeaName] = useState('')
+  const [ideaOneLiner, setIdeaOneLiner] = useState('')
 
-  const addManualIdea = () => {
-    if (manualIdea.name.trim()) {
+  const addIdea = () => {
+    if (ideaName.trim()) {
       const newIdea: Idea = {
         id: Math.random().toString(36).slice(2, 9),
-        name: manualIdea.name,
-        oneLiner: manualIdea.oneLiner,
+        name: ideaName,
+        oneLiner: ideaOneLiner,
         branches: [],
         selected: false,
         effortScore: 3,
@@ -53,7 +30,14 @@ export const Stage2: React.FC<Stage2Props> = ({ session, onUpdate, onNext, onBac
         updatedAt: Date.now(),
       })
 
-      setManualIdea({ name: '', oneLiner: '' })
+      setIdeaName('')
+      setIdeaOneLiner('')
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && ideaName.trim()) {
+      addIdea()
     }
   }
 
@@ -61,75 +45,67 @@ export const Stage2: React.FC<Stage2Props> = ({ session, onUpdate, onNext, onBac
     <div className="stage-container">
       <div className="stage-header">
         <div className="stage-number">🌱 Stage 2</div>
-        <h1>Generate Ideas</h1>
-        <p style={{ marginBottom: 0 }}>Pick a prompt or manually add ideas</p>
+        <h1>Add Your Ideas</h1>
+        <p style={{ marginBottom: 0 }}>What could solve {session.problem.toLowerCase()}?</p>
       </div>
 
       {session.ideas.length > 0 && (
         <div className="alert alert-success mb-6">
-          ✓ You have {session.ideas.length} idea{session.ideas.length !== 1 ? 's' : ''} so far
+          ✓ {session.ideas.length} idea{session.ideas.length !== 1 ? 's' : ''} added
         </div>
       )}
 
-      <div style={{ marginBottom: '2rem' }}>
-        <p style={{ fontSize: '0.875rem', color: '#718096', marginBottom: '1rem' }}>
-          Try one of these prompts (copy into ChatGPT or Claude):
-        </p>
-        <div className="grid grid-2">
-          {promptTemplates.map((prompt, idx) => (
-            <div key={idx} className="card">
-              <div className="card-header">{prompt.emoji} {prompt.title}</div>
-              <p className="card-description">{prompt.desc}</p>
-              <button className="btn-secondary btn-small" onClick={() => alert('Copy to clipboard:\n\nProblem: ' + session.problem + '\n\n' + prompt.title)}>
-                📋 Copy Prompt
-              </button>
-            </div>
-          ))}
+      <div className="flex flex-col gap-4" style={{ marginBottom: '2rem' }}>
+        <div>
+          <label htmlFor="idea-name">Idea Name *</label>
+          <input
+            id="idea-name"
+            type="text"
+            value={ideaName}
+            onChange={(e) => setIdeaName(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="e.g., Async Decision Doc"
+            autoFocus
+          />
         </div>
+
+        <div>
+          <label htmlFor="idea-liner">How does it help? (optional)</label>
+          <input
+            id="idea-liner"
+            type="text"
+            value={ideaOneLiner}
+            onChange={(e) => setIdeaOneLiner(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Brief description"
+          />
+        </div>
+
+        <button
+          className="btn-primary"
+          onClick={addIdea}
+          disabled={!ideaName.trim()}
+          style={{ opacity: ideaName.trim() ? 1 : 0.5, cursor: ideaName.trim() ? 'pointer' : 'not-allowed' }}
+        >
+          + Add Idea
+        </button>
       </div>
 
-      <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '2rem' }}>
-        <h3>Or add ideas manually</h3>
-        
-        {!showManualInput ? (
-          <button className="btn-secondary" onClick={() => setShowManualInput(true)}>
-            + Add Idea Manually
-          </button>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <div>
-              <label htmlFor="idea-name">Idea Name</label>
-              <input
-                id="idea-name"
-                type="text"
-                value={manualIdea.name}
-                onChange={(e) => setManualIdea({ ...manualIdea, name: e.target.value })}
-                placeholder="e.g., Async Decision Doc"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="idea-liner">One-liner</label>
-              <input
-                id="idea-liner"
-                type="text"
-                value={manualIdea.oneLiner}
-                onChange={(e) => setManualIdea({ ...manualIdea, oneLiner: e.target.value })}
-                placeholder="How does this help?"
-              />
-            </div>
-
-            <div className="button-group gap-4">
-              <button className="btn-primary" onClick={addManualIdea}>
-                + Add Idea
-              </button>
-              <button className="btn-secondary" onClick={() => setShowManualInput(false)}>
-                Cancel
-              </button>
-            </div>
+      {session.ideas.length > 0 && (
+        <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '2rem' }}>
+          <h3>Your Ideas So Far</h3>
+          <div className="flex flex-col gap-2">
+            {session.ideas.map((idea) => (
+              <div key={idea.id} className="card p-4" style={{ backgroundColor: '#f7fafc' }}>
+                <div className="card-header" style={{ marginBottom: '0.25rem' }}>
+                  {idea.name}
+                </div>
+                {idea.oneLiner && <p className="card-description" style={{ marginBottom: 0 }}>{idea.oneLiner}</p>}
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="button-group" style={{ marginTop: '3rem' }}>
         <button className="btn-secondary" onClick={onBack}>
